@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171a1f">
+  <meta name="description" content="Jadwal sholat harian berdasarkan lokasi Anda.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Jadwal Sholatku</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <style>
+    :root{color-scheme:dark;--bg:#111419;--panel:#1b2027;--panel2:#242b34;--gold:#e8c76a;--muted:#aeb6c2;--text:#f5f6f7;--line:#343c47;--green:#9bc7a6}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#28303a 0,#111419 55%);color:var(--text);font-family:Roboto,"Segoe UI",Arial,sans-serif;min-height:100vh}
+    .wrap{width:min(100%,560px);margin:auto;padding:18px 16px 32px}
+    header{display:flex;align-items:center;justify-content:space-between;margin:8px 2px 20px}
+    .brand{display:flex;gap:11px;align-items:center}.logo{width:42px;height:42px;border-radius:14px;background:#2d333c;display:grid;place-items:center;color:var(--gold);font-size:23px;border:1px solid #48515d}
+    h1{font-size:19px;margin:0;letter-spacing:.2px} .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    button{border:0;border-radius:12px;background:var(--gold);color:#242017;font-weight:700;padding:12px 15px;font-size:14px;cursor:pointer}
+    button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+    button:disabled{opacity:.55}
+    .hero{background:linear-gradient(145deg,#2a3038,#1b2027);border:1px solid #424a55;border-radius:24px;padding:21px 19px;box-shadow:0 15px 40px #0004}
+    .location{color:var(--muted);font-size:13px;display:flex;gap:7px;align-items:center}
+    .date{font-size:13px;color:var(--muted);margin-top:8px}
+    .next-label{font-size:12px;color:var(--gold);letter-spacing:1.4px;font-weight:800;margin-top:23px}
+    .next-name{font-size:27px;font-weight:750;margin-top:5px}
+    .countdown{font-size:36px;font-weight:800;letter-spacing:1px;margin-top:4px;font-variant-numeric:tabular-nums}
+    .hint{font-size:12px;color:var(--muted);margin-top:5px}
+    .section-title{font-size:15px;font-weight:750;margin:24px 3px 12px}
+    .prayers{display:grid;gap:9px}
+    .prayer{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+    .prayer.active{border-color:var(--gold);background:#302b1f}
+    .p-left{display:flex;align-items:center;gap:12px}.p-icon{width:35px;height:35px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;color:var(--gold)}
+    .p-name{font-weight:700;font-size:15px}.p-note{font-size:11px;color:var(--muted);margin-top:3px}.p-time{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+    .tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:17px}
+    .info{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px}
+    .info strong{color:var(--gold)}.info p{font-size:12px;line-height:1.6;color:var(--muted);margin:7px 0 0}
+    .status{font-size:12px;color:var(--muted);min-height:18px;margin:12px 3px}
+    .footer{text-align:center;color:#7f8996;font-size:11px;margin-top:22px;line-height:1.6}
+    .settings{display:none;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:15px}
+    .settings.show{display:block}.settings label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    select,input{width:100%;padding:11px;border-radius:10px;background:#11161c;border:1px solid var(--line);color:var(--text);font-size:14px}
+    @media(min-width:480px){.wrap{padding-top:28px}.hero{padding:25px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo">☾</div><div><h1>Jadwal Sholatku</h1><div class="sub">Teman ibadah setiap hari</div></div></div>
+    <button class="secondary" id="settingsBtn" aria-label="Pengaturan">⚙</button>
+  </header>
+
+  <section class="hero">
+    <div class="location">📍 <span id="locationText">Lokasi belum ditentukan</span></div>
+    <div class="date" id="dateText">Memuat tanggal…</div>
+    <div class="next-label">WAKTU SHOLAT BERIKUTNYA</div>
+    <div class="next-name" id="nextName">Memuat…</div>
+    <div class="countdown" id="countdown">--:--:--</div>
+    <div class="hint" id="nextHint">Aktifkan lokasi untuk melihat jadwal wilayah Anda.</div>
+  </section>
+
+  <div class="section-title">Jadwal hari ini</div>
+  <section class="prayers" id="prayerList">
+    <div class="prayer"><span>Memuat jadwal sholat…</span></div>
+  </section>
+
+  <div class="tools">
+    <button id="locBtn">◎ Gunakan lokasi HP</button>
+    <button class="secondary" id="notifyBtn">♢ Aktifkan pengingat</button>
+  </div>
+  <div class="status" id="statusText" role="status"></div>
+
+  <section class="settings" id="settingsPanel">
+    <strong>Pengaturan jadwal</strong>
+    <label for="method">Metode perhitungan</label>
+    <select id="method">
+      <option value="20" selected>Singapura (20° / 18°) – rekomendasi awal Indonesia</option>
+      <option value=" example"> </option>
+      <option value="3">Muslim World League</option>
+      <option value="5">Egyptian General Authority</option>
+      <option value="2">ISNA</option>
+    </select>
+    <label for="cityInput">Nama wilayah (opsional, hanya label)</label>
+    <input id="cityInput" placeholder="Contoh: Kedungwaringin, Bekasi">
+    <p class="hint">Jadwal dihitung dari koordinat GPS dan metode yang dipilih. Untuk ketepatan resmi setempat, cocokkan metode dengan jadwal Kementerian Agama/masjid wilayah Anda.</p>
+    <button id="saveSettings" style="margin-top:12px;width:100%">Simpan pengaturan</button>
+  </section>
+
+  <section class="info">
+    <strong>Kalender Hijriah</strong>
+    <p id="hijriText">Akan ditampilkan setelah jadwal berhasil dimuat.</p>
+  </section>
+
+  <div class="footer">Jadwal Sholatku • Data jadwal melalui AlAdhan API<br>Perlu koneksi internet untuk mengambil jadwal terbaru.</div>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const prayerNames = [
+    ["Fajr","Subuh","☀"],["Dhuhr","Dzuhur","☼"],["Asr","Ashar","◐"],["Maghrib","Maghrib","☾"],["Isha","Isya","✦"]
+  ];
+  let timings = null, coords = null, cityLabel = "", nextTimer = null, reminderTimer = null;
+  const defaults = {method:"20", city:""};
+  let settings = {...defaults};
+  try { settings = {...defaults, ...JSON.parse(localStorage.getItem("js_settings") || "{}")}; } catch(e) {}
+  $("method").value = settings.method;
+  $("cityInput").value = settings.city;
+
+  const cleanTime = value => (value || "").split(" ")[0].slice(0,5);
+  const today = () => new Date();
+  function dateLabel(){
+    const d=today();
+    const greg=d.toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    $("dateText").textContent=greg;
+  }
+  function setStatus(message){ $("statusText").textContent=message; }
+  function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+  function timeToday(hhmm, offset=0){
+    const [h,m]=hhmm.split(":").map(Number);
+    const d=new Date(); d.setHours(h,m,0,0); d.setDate(d.getDate()+offset); return d;
+  }
+  function render(){
+    if(!timings) return;
+    const now=new Date();
+    const entries=prayerNames.map(([key,name,icon])=>({key,name,icon,time:cleanTime(timings[key])}));
+    let next=entries.find(p=>timeToday(p.time)>now);
+    let nextDate;
+    if(next){nextDate=timeToday(next.time);}
+    else {next=entries[0];nextDate=timeToday(next.time,1);}
+    const diff=Math.max(0,nextDate-now);
+    const hh=String(Math.floor(diff/3600000)).padStart(2,"0");
+    const mm=String(Math.floor(diff%3600000/60000)).padStart(2,"0");
+    const ss=String(Math.floor(diff%60000/1000)).padStart(2,"0");
+    $("nextName").textContent=next.name;
+    $("countdown").textContent=`${hh}:${mm}:${ss}`;
+    $("nextHint").textContent=`Waktu ${next.name} pukul ${next.time}`;
+    $("prayerList").innerHTML=entries.map(p=>{
+      const active=p.key===next.key;
+      return `<div class="prayer ${active?"active":""}"><div class="p-left"><div class="p-icon">${p.icon}</div><div><div class="p-name">${p.name}</div><div class="p-note">${active?"Berikutnya":"Waktu sholat"}</div></div></div><div class="p-time">${p.time}</div></div>`;
+    }).join("");
+    if(reminderTimer) clearTimeout(reminderTimer);
+    const mins=Math.max(0,Math.floor(diff/60000));
+    if(mins<=10 && mins>0 && Notification.permission==="granted"){
+      // Pengingat saat aplikasi terbuka; browser dapat membatasi notifikasi di latar belakang.
+      reminderTimer=setTimeout(()=>{try{new Notification(`Menuju ${next.name}`,{body:`${next.name} pukul ${next.time}.`});}catch(e){}},Math.max(0,diff-10*60000));
+    }
+  }
+  async function fetchPrayerTimes(lat, lon){
+    setStatus("Mengambil jadwal sholat wilayah Anda…");
+    const d=new Date();
+    const url=`https://api.aladhan.com/v1/timings/${Math.floor(d.getTime()/1000)}?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&method=${encodeURIComponent(settings.method)}`;
+    try{
+      const response=await fetch(url);
+      if(!response.ok) throw new Error("Server jadwal tidak merespons.");
+      const json=await response.json();
+      if(json.code!==200 || !json.data) throw new Error("Data jadwal tidak tersedia.");
+      timings=json.data.timings;
+      const hijri=json.data.date?.hijri;
+      $("hijriText").textContent=hijri?`${hijri.day} ${hijri.month.en} ${hijri.year} H (${hijri.month.ar || ""})`:"Kalender Hijriah tidak tersedia.";
+      const area=cityLabel || settings.city || `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+      $("locationText").textContent=area;
+      dateLabel(); render();
+      setStatus("Jadwal berhasil diperbarui.");
+      if(nextTimer) clearInterval(nextTimer);
+      nextTimer=setInterval(render,1000);
+      localStorage.setItem("js_last_coords",JSON.stringify({lat,lon,city:cityLabel}));
+    }catch(err){setStatus("Gagal mengambil jadwal: "+err.message+" Periksa koneksi internet.");}
+  }
+  function useLocation(){
+    if(!navigator.geolocation){setStatus("Browser ini tidak mendukung GPS. Coba gunakan Chrome.");return;}
+    setStatus("Meminta izin lokasi HP…");
+    navigator.geolocation.getCurrentPosition(pos=>{
+      coords={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      cityLabel=settings.city || "Lokasi GPS Anda";
+      fetchPrayerTimes(coords.lat,coords.lon);
+    },err=>{
+      const messages={1:"Izin lokasi ditolak. Aktifkan izin lokasi untuk Chrome.",2:"Lokasi tidak ditemukan. Periksa GPS.",3:"Permintaan lokasi terlalu lama. Coba lagi."};
+      setStatus(messages[err.code] || "Tidak bisa membaca lokasi.");
+    },{enableHighAccuracy:true,timeout:20000,maximumAge:300000});
+  }
+  $("locBtn").addEventListener("click",useLocation);
+  $("settingsBtn").addEventListener("click",()=>$("settingsPanel").classList.toggle("show"));
+  $("saveSettings").addEventListener("click",()=>{
+    settings.method=$("method").value; settings.city=$("cityInput").value.trim();
+    localStorage.setItem("js_settings",JSON.stringify(settings));
+    $("settingsPanel").classList.remove("show");
+    if(coords){cityLabel=settings.city || "Lokasi GPS Anda";fetchPrayerTimes(coords.lat,coords.lon);}
+    setStatus("Pengaturan disimpan.");
+  });
+  $("notifyBtn").addEventListener("click",async()=>{
+    if(!("Notification" in window)){setStatus("Browser tidak mendukung notifikasi.");return;}
+    const permission=await Notification.requestPermission();
+    setStatus(permission==="granted"?"Izin notifikasi aktif. Pengingat bekerja saat aplikasi dapat berjalan.":"Izin notifikasi belum diberikan.");
+  });
+  dateLabel();
+  // Coba memakai koordinat terakhir agar pengguna tidak perlu menekan tombol setiap membuka aplikasi.
+  try{
+    const last=JSON.parse(localStorage.getItem("js_last_coords")||"null");
+    if(last && Number.isFinite(last.lat) && Number.isFinite(last.lon)){
+      coords=last; cityLabel=settings.city || last.city || "Lokasi terakhir"; fetchPrayerTimes(coords.lat,coords.lon);
+    } else {
+      $("locationText").textContent="Tekan tombol lokasi untuk memulai";
+      $("nextName").textContent="Selamat datang";
+      $("nextHint").textContent="Izinkan akses lokasi untuk melihat jadwal sholat.";
+    }
+  }catch(e){}
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>
